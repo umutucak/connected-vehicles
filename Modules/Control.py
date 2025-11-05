@@ -51,22 +51,12 @@ class PIDLongitudinalController():
             :param current_speed: current speed of the vehicle in Km/h
             :return: throttle/brake control
         """
- 
         error = target_speed - current_speed
         self._error_buffer.append(error)
-
-        ###################### TODO ######################
-        if len(self._error_buffer) >= 2:
-            _de = ##TODO
-            _ie = ##TODO
-        else:
-            _de = 0.0
-            _ie = 0.0
-        
-        control = ##TODO
+        der = (error - self._error_buffer[-1])/self._dt
+        control = self._k_p * error + self._k_i*sum(self._error_buffer)*self._dt + self._k_d * der
  
         return np.clip(control, -1.0, 1.0)
-        ###################### TODO ######################
 
     def change_parameters(self, K_P, K_I, K_D, dt):
         """Changes the PID parameters"""
