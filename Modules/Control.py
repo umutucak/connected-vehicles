@@ -10,7 +10,7 @@ class PIDLongitudinalController():
     PIDLongitudinalController implements longitudinal control using a PID.
     """
  
-    def __init__(self, vehicle, K_P=1.0, K_I=0.0, K_D=0.0, dt=0.03):
+    def __init__(self, vehicle, K_P=1.0, K_I=0.0, K_D=0.7, dt=0.03):
         """
         Constructor method.
  
@@ -131,32 +131,30 @@ class PIDLateralController():
                           w_loc.y - ego_loc.y,
                           0.0])
         
-        ###################### TODO ######################
         wv_linalg = np.linalg.norm(w_vec) * np.linalg.norm(v_vec)
         if wv_linalg == 0:
             _dot = 1
         else:
-            _dot = ##TODO
+            _dot = np.dot(v_vec, w_vec)
+        angle = np.arccos(_dot/wv_linalg)
+        print(angle)
 
-        _cross = ##TODO
+        _cross = np.cross(v_vec, w_vec)
 
         #change the sign of the dot product depending on whether we are turning left or right
+        if _cross[2] < 0: angle *= -1
         
-        ##TODO
+        self._e_buffer.append(angle)
  
-        self._e_buffer.append(_dot)
-
-        if len(self._e_buffer) >= 2:
-            _de = ##TODO
-            _ie = ##TODO
+        if len(self._e_buffer) < 2:
+            der = 0
         else:
-            _de = 0.0
-            _ie = 0.0
+            der = (angle - self._e_buffer[-2])/self._dt
+        
 
-        control = ##TODO
- 
+        control = self._k_p * angle + self._k_i*sum(self._e_buffer)*self._dt + self._k_d * der
+
         return np.clip(control, -1.0, 1.0)
-        ###################### TODO ######################
  
     def change_parameters(self, K_P, K_I, K_D, dt):
         """Changes the PID parameters"""
