@@ -10,7 +10,7 @@ class PIDLongitudinalController():
     PIDLongitudinalController implements longitudinal control using a PID.
     """
  
-    def __init__(self, vehicle, K_P=1.0, K_I=0.0, K_D=0.7, dt=0.03):
+    def __init__(self, vehicle, K_P=2.0, K_I=0.10, K_D=0.7, dt=0.03):
         """
         Constructor method.
  
@@ -70,7 +70,7 @@ class PIDLateralController():
     PIDLateralController implements lateral control using a PID.
     """
  
-    def __init__(self, vehicle, offset=0, K_P=1.0, K_I=0.0, K_D=0.0, dt=0.03):
+    def __init__(self, vehicle, offset=0, K_P=0, K_I=0, K_D=0, dt=0.03):
         """
         Constructor method.
  
