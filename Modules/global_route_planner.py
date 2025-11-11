@@ -52,6 +52,7 @@ class GlobalRoutePlanner(object):
         destination_waypoint = self._wmap.get_waypoint(destination)
 
         for i in range(len(route) - 1):
+            print(route)
             road_option = self._turn_decision(i, route)
             edge = self._graph.edges[route[i], route[i+1]]
             path = []
@@ -288,7 +289,7 @@ class GlobalRoutePlanner(object):
         return np.linalg.norm(l1-l2)
     
 
-    """
+    
     def astar_path(self, G, source, target, heuristic=None, weight="weight"):
 
         if source not in G:
@@ -319,45 +320,47 @@ class GlobalRoutePlanner(object):
         # computed heuristics to target. We avoid computing the heuristics
         # more than once and inserting the node into the queue too many times.
         enqueued = {}
+        enqueued[source] = 0
         # Maps explored nodes to parent closest to the source.
         explored = {}
+        explored[source] = None
 
         while queue:
             # Pop the smallest item from queue.
             _, __, curnode, dist, parent = pop(queue)
 
             if curnode == target:
-                path = [curnode]
-                node = parent
+                print("found")
+                path = [target]
+                node = target
                 while node is not None:
-                    ##TODO##
+                    print(node)
+                    node = explored[node]
+                    path.append(node)
+                path.pop()
+                path.reverse()
                 return path
-
-            if curnode in explored:
-                # Do not override the parent of starting node
-                if explored[curnode] is None:
-                    continue
-
-                # Skip bad paths that were enqueued before finding a better one
-                qcost, h = enqueued[curnode]
-                if qcost < dist:
-                    continue
-
-            explored[curnode] = parent
-
-            for neighbor, w in G_succ[curnode].items():
-                cost = weight(curnode, neighbor, w)
-                if cost is None:
-                    continue
-                ncost = dist + cost
-                ##TODO##
-
-
-                ##TODO##
-                push(queue, (ncost + h, next(c), neighbor, ncost, curnode))
+            else:
+                for neighbor, w in G_succ[curnode].items():
+                    print(curnode, neighbor)
+                    if neighbor not in explored:
+                        g_score = weight(curnode, neighbor, w) + dist
+                        h_score = heuristic(neighbor, target)
+                        f_score = g_score + h_score
+                        enqueued[neighbor] = g_score
+                        push(queue, (f_score, next(c), neighbor, g_score, curnode))
+                        explored[neighbor] = curnode
+                    else:
+                        if enqueued[neighbor] > weight(curnode, neighbor, w) + dist:
+                            g_score = weight(curnode, neighbor, w) + dist
+                            h_score = heuristic(neighbor, target)
+                            f_score = g_score + h_score
+                            enqueued[neighbor] = g_score
+                            push(queue, (f_score, next(c), neighbor, g_score, curnode))
+                            explored[neighbor] = curnode
 
         raise nx.NetworkXNoPath(f"Node {target} not reachable from {source}")
-        """
+        
     
     def _path_search(self, origin, destination):
         """
@@ -370,14 +373,10 @@ class GlobalRoutePlanner(object):
         """
         start, end = self._localize(origin), self._localize(destination)
 
-        route = nx.astar_path(
+        route = self.astar_path(
             self._graph, source=start[0], target=end[0],
             heuristic=self._distance_heuristic, weight='length')
-        #Once you have completed the astar_path method above, comment the line above to call your method instead of the default one.
 
-        #route = self.astar_path(
-        #    self._graph, source=start[0], target=end[0],
-        #    heuristic=self._distance_heuristic, weight='length')
         route.append(end[1])
         return route
 
