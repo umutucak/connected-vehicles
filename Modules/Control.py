@@ -137,7 +137,6 @@ class PIDLateralController():
         else:
             _dot = np.dot(v_vec, w_vec)
         angle = np.arccos(_dot/wv_linalg)
-        print(angle)
 
         _cross = np.cross(v_vec, w_vec)
 

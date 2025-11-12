@@ -52,7 +52,6 @@ class GlobalRoutePlanner(object):
         destination_waypoint = self._wmap.get_waypoint(destination)
 
         for i in range(len(route) - 1):
-            print(route)
             road_option = self._turn_decision(i, route)
             edge = self._graph.edges[route[i], route[i+1]]
             path = []
@@ -330,11 +329,9 @@ class GlobalRoutePlanner(object):
             _, __, curnode, dist, parent = pop(queue)
 
             if curnode == target:
-                print("found")
                 path = [target]
                 node = target
                 while node is not None:
-                    print(node)
                     node = explored[node]
                     path.append(node)
                 path.pop()
@@ -342,7 +339,6 @@ class GlobalRoutePlanner(object):
                 return path
             else:
                 for neighbor, w in G_succ[curnode].items():
-                    print(curnode, neighbor)
                     if neighbor not in explored:
                         g_score = weight(curnode, neighbor, w) + dist
                         h_score = heuristic(neighbor, target)

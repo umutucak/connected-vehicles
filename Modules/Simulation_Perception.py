@@ -667,6 +667,7 @@ class CameraManager(object):
         self.index = index
 
     def set_model(self, model):
+        print("setting to YOLO")
         self.model = model
 
     def next_sensor(self):
@@ -712,14 +713,46 @@ class CameraManager(object):
             array = array[:, :, :3]
             array = array[:, :, ::-1]
 
-            ############# pass the camera images (contained in array) through our model to draw the bounding boxes #############
+            array = np.copy(array)
+
+            ############# pass the camera images (contained in array) through our model to draw the bounding boxes #############            
+            result = self.model(array)[0]
+
+            boxes = result.boxes.xyxy.cpu().numpy()
+            confs = result.boxes.conf.cpu().numpy()
+            classes = result.boxes.cls.cpu().numpy().astype(int)
+
+            names = result.names
+
+            df = pd.DataFrame(boxes, columns=["x1", "y1", "x2", "y2"])
+            df["confidence"] = confs
+            df["class_id"] = classes
+            df["label"] = [names[c] for c in classes]
+            df["source_image"] = result.path
+            df["inference_time_ms"] = result.speed["inference"]
             
-            result = ##TODO##
-            array = ##TODO##
-            self.result = result.to_df() ##convert the results to a dataframe format
+            # I TOOK THIS BLOCK STRAIGHT FROM GPT
+            # Draw bounding boxes directly on the RGB array
+            for box, conf, cls in zip(boxes, confs, classes):
+                x1, y1, x2, y2 = box.astype(int)
+                label = names[int(cls)]
+                confidence = float(conf)
+                color = tuple(int(c) for c in np.random.RandomState(int(cls)).randint(0, 255, 3))
+                cv2.rectangle(array, (x1, y1), (x2, y2), color, 2)
+                text = f"{label} {confidence:.2f}"
+                (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                cv2.rectangle(array, (x1, y1 - th - 4), (x1 + tw, y1), color, -1)
+                cv2.putText(array, text, (x1, y1 - 2),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            
+            self.result = df ##convert the results to a dataframe format
             ###############################################################################################
             
+            # if image.frame % 5 != 0:
+                # Only display the raw camera feed
             self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+                # return
+
         if self.recording:
             image.save_to_disk('_out/%08d' % image.frame)
 
