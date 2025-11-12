@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 8
+names: ['bike', 'green_light', 'motobike', 'red_light', 'traffic_light', 'traffic_sign', 'vehicle', 'yellow_light']
+
+roboflow:
+  workspace: carla-test
+  project: modified-carla
+  version: 3
+  license: Private
+  url: https://app.roboflow.com/carla-test/modified-carla/3
