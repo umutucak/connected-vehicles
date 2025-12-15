@@ -712,13 +712,20 @@ class CameraManager(object):
             array = np.reshape(array, (image.height, image.width, 4))
             array = array[:, :, :3]
             # array = array[:, :, ::-1]
-            array = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
-
-            array = np.copy(array)
+            # array = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
+            
+            array = cv2.resize(array, (640, 640), interpolation=cv2.INTER_AREA)
 
 
             ############# pass the camera images (contained in array) through our model to draw the bounding boxes #############            
-            result = self.model(array)[0]
+            result = self.model(
+                array,
+                conf=0.20,
+                imgsz=640,
+                classes=[0, 2, 3, 6]
+            )[0]
+
+            array = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
 
             boxes = result.boxes.xyxy.cpu().numpy()
             confs = result.boxes.conf.cpu().numpy()

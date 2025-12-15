@@ -56,8 +56,7 @@ class CustomAgent(BasicAgent):
         self._behavior = None
         self._sampling_resolution = 4.5
         self.det_res = pd.DataFrame()
-        self.detected_label = [] ##Add the names of the labels that your model is detecting and want to react to
-        
+        self.detected_label = np.array([]) ##Add the names of the labels that your model is detecting and want to react to
 
         # Parameters for agent behavior
         if behavior == 'cautious':
@@ -101,6 +100,11 @@ class CustomAgent(BasicAgent):
         """
         self.det_res = perception_results
 
+        self.detected_label = set()
+        if perception_results is not None and not perception_results.empty:
+            for _, row in perception_results.iterrows():
+                self.detected_label.add(row["label"])
+
     def traffic_light_manager(self):
         """
         This method is in charge of behaviors for red lights.
@@ -138,6 +142,10 @@ class CustomAgent(BasicAgent):
 
 
         if self._ignore_traffic_lights:
+            return (False, None)
+        
+        if "red_light" not in self.detected_label:
+            self._last_traffic_light = None
             return (False, None)
 
         if not lights_list:
@@ -228,6 +236,9 @@ class CustomAgent(BasicAgent):
                 return None
 
             return Polygon(route_bb)
+
+        if "vehicle" not in self.detected_label:
+            return (False, None, -1)
 
         if self._ignore_vehicles:
             return (False, None, -1)
