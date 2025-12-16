@@ -1,4 +1,8 @@
 # cav-class
+## STUDENTS
+this is the group project of Dorian Sousa Calvo and Umut Ucak for Connected and Autonomous Vehicles. Below is a demo of our project's final version:
+
+https://github.com/user-attachments/assets/0b0b2d86-20f8-4cd6-9409-adbb25bc257e
 
 ----
 
