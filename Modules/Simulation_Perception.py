@@ -717,7 +717,6 @@ class CameraManager(object):
             array = cv2.resize(array, (640, 640), interpolation=cv2.INTER_AREA)
 
 
-            ############# pass the camera images (contained in array) through our model to draw the bounding boxes #############            
             result = self.model(
                 array,
                 conf=0.20,
@@ -727,16 +726,50 @@ class CameraManager(object):
 
             array = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
 
-            boxes = result.boxes.xyxy.cpu().numpy()
-            confs = result.boxes.conf.cpu().numpy()
-            classes = result.boxes.cls.cpu().numpy().astype(int)
-
+            # boxes = result.boxes.xyxy.cpu().numpy()
+            # confs = result.boxes.conf.cpu().numpy()
+            # classes = result.boxes.cls.cpu().numpy().astype(int)
             names = result.names
+
+            boxes = result.boxes.xyxy.cpu().numpy() if result.boxes is not None else np.empty((0, 4))
+            confs = result.boxes.conf.cpu().numpy() if result.boxes is not None else np.empty((0,))
+            classes = result.boxes.cls.cpu().numpy().astype(int) if result.boxes is not None else np.empty((0,), dtype=int)
+
+            H, W = 640, 640
+            max_w = 0.8*W
+            max_h = 0.8*H
+
+            filtered_boxes   = []
+            filtered_confs   = []
+            filtered_classes = []
+            for box, conf, cls in zip(boxes, confs, classes):
+                x1, y1, x2, y2 = box
+                w = x2 - x1
+                h = y2 - y1
+
+                # drop full screen detections
+                if w >= max_w or h >= max_h:
+                    # optional: debug print
+                    print(f"Dropping huge box {w:.1f}x{h:.1f} cls={names[int(cls)]}")
+                    continue
+
+                filtered_boxes.append(box)
+                filtered_confs.append(conf)
+                filtered_classes.append(cls)
+
+            if len(filtered_boxes) == 0:
+                boxes   = np.empty((0, 4), dtype=float)   # (0,4) -> matches 4 columns
+                confs   = np.empty((0,), dtype=float)
+                classes = np.empty((0,), dtype=int)
+            else:
+                boxes   = np.asarray(filtered_boxes, dtype=float)   # (N,4)
+                confs   = np.asarray(filtered_confs, dtype=float)   # (N,)
+                classes = np.asarray(filtered_classes, dtype=int)   # (N,)
 
             df = pd.DataFrame(boxes, columns=["x1", "y1", "x2", "y2"])
             df["confidence"] = confs
             df["class_id"] = classes
-            df["label"] = [names[c] for c in classes]
+            df["label"] = [names[int(c)] for c in classes]
             df["source_image"] = result.path
             df["inference_time_ms"] = result.speed["inference"]
             
