@@ -151,8 +151,8 @@ class PIDLateralController():
         #change the sign of the dot product depending on whether we are turning left or right
         if _cross[2] < 0: angle *= -1
         
-        if len(self._error_buffer) >= 2:
-            der = (angle - self._error_buffer[-1])/self._dt
+        if len(self._e_buffer) >= 2:
+            der = (angle - self._e_buffer[-1])/self._dt
             _ie = sum(self._e_buffer)
         else:
             der = 0.0
