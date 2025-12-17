@@ -1,8 +1,15 @@
 # cav-class
 ## STUDENTS
-this is the group project of Dorian Sousa Calvo and Umut Ucak for Connected and Autonomous Vehicles. Below is a demo of our project's final version:
+this is the group project of Dorian Sousa Calvo and Umut Ucak for Connected and Autonomous Vehicles. Below are two demos for our project's final version:
+### stopping at red lights
 
 https://github.com/user-attachments/assets/0b0b2d86-20f8-4cd6-9409-adbb25bc257e
+
+### stopping for vehicle traffic
+
+
+https://github.com/user-attachments/assets/ef2c2299-2a25-48ca-96f4-8596832e35fc
+
 
 ----
 
