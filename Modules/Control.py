@@ -52,9 +52,17 @@ class PIDLongitudinalController():
             :return: throttle/brake control
         """
         error = target_speed - current_speed
+        
+        if len(self._error_buffer) >= 2:
+            der = (error - self._error_buffer[-1])/self._dt
+            _ie = sum(self._error_buffer)
+        else:
+            der = 0.0
+            _ie = 0.0
+
         self._error_buffer.append(error)
-        der = (error - self._error_buffer[-1])/self._dt
-        control = self._k_p * error + self._k_i*sum(self._error_buffer)*self._dt + self._k_d * der
+        
+        control = self._k_p * error + self._k_i*_ie*self._dt + self._k_d * der
  
         return np.clip(control, -1.0, 1.0)
 
@@ -143,15 +151,16 @@ class PIDLateralController():
         #change the sign of the dot product depending on whether we are turning left or right
         if _cross[2] < 0: angle *= -1
         
-        self._e_buffer.append(angle)
- 
-        if len(self._e_buffer) < 2:
-            der = 0
+        if len(self._error_buffer) >= 2:
+            der = (angle - self._error_buffer[-1])/self._dt
+            _ie = sum(self._e_buffer)
         else:
-            der = (angle - self._e_buffer[-2])/self._dt
-        
+            der = 0.0
+            _ie = 0.0
+    
+        self._e_buffer.append(angle)
 
-        control = self._k_p * angle + self._k_i*sum(self._e_buffer)*self._dt + self._k_d * der
+        control = self._k_p * angle + self._k_i*_ie*self._dt + self._k_d * der
 
         return np.clip(control, -1.0, 1.0)
  
