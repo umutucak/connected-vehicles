@@ -120,7 +120,7 @@ def get_actor_blueprints(world, filter, generation):
 class World(object):
     """ Class representing the surrounding environment """
 
-    def __init__(self, carla_world, hud, args):
+    def __init__(self, carla_world, hud, args, traffic_manager):
         """Constructor method"""
         self._args = args
         self.world = carla_world
@@ -131,6 +131,7 @@ class World(object):
             print('  The server could not send the OpenDRIVE (.xodr) file:')
             print('  Make sure it exists, has the same name of your town, and is correct.')
             sys.exit(1)
+        self.traffic_manager = traffic_manager
         
         self.hud = hud
         self.player = None
@@ -182,6 +183,8 @@ class World(object):
             self.player = self.world.try_spawn_actor(blueprint, spawn_point)
             self.modify_vehicle_physics(self.player)
 
+        self.spawn_test_vehicles(num_vehicles=args.vehicles)
+
         if self._args.sync:
             self.world.tick()
         else:
@@ -196,6 +199,38 @@ class World(object):
         self.camera_manager.set_sensor(cam_index, notify=False)
         actor_type = get_actor_display_name(self.player)
         self.hud.notification(actor_type)
+
+    def spawn_test_vehicles(self, num_vehicles=0):
+        if num_vehicles == 0:
+            return
+        
+        world = self.world
+        self.traffic_manager.set_global_distance_to_leading_vehicle(2.5)
+        self.traffic_manager.set_synchronous_mode(self._args.sync)
+
+        blueprints = world.get_blueprint_library().filter("vehicle.*")
+        spawn_points = world.get_map().get_spawn_points()
+        random.shuffle(spawn_points)
+
+        spawned = []
+        for sp in spawn_points:
+            if len(spawned) >= num_vehicles:
+                break
+            bp = random.choice(blueprints)
+            if bp.has_attribute("color"):
+                color = random.choice(bp.get_attribute("color").recommended_values)
+                bp.set_attribute("color", color)
+            bp.set_attribute("role_name", "autopilot")
+
+            veh = world.try_spawn_actor(bp, sp)
+            if veh is None:
+                continue
+
+            veh.set_autopilot(True, self.traffic_manager.get_port())
+            spawned.append(veh)
+
+        print(f"Spawned {len(spawned)} test vehicles")
+        self._test_vehicles = spawned
 
     def next_weather(self, reverse=False):
         """Get next weather setting"""
@@ -837,7 +872,7 @@ def game_loop(args):
         
 
         hud = HUD(args.width, args.height)
-        world = World(client.get_world(), hud, args)
+        world = World(client.get_world(), hud, args, traffic_manager)
         controller = KeyboardControl(world)
         if args.agent == "Basic":
             agent = BasicAgent(world.player, 30)
@@ -980,6 +1015,12 @@ def main():
         help='Set seed for repeating executions (default: None)',
         default=None,
         type=int)
+    argparser.add_argument(
+        "--vehicles",
+        type=int,
+        default=0,
+        help="Number of background vehicles to spawn (default: 0)"
+    )
 
     args = argparser.parse_args()
 
